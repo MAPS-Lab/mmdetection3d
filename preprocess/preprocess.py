@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import lxml.etree
 import read_raw, extract_gt, pcl_sync, copy_lidar, partition, vis_pcl
+import ipdb
 
 def _purge(paths):
     for path in paths:
@@ -25,9 +26,20 @@ def _get_data_dirs(root, assume_yes=False):
     for i, dir in enumerate(dirs):
         print(f'\t{i + 1}.\t {dir}')
     if not assume_yes:
-        ans = input('Is this the correct set of directories containing data? [y/n] ')
+        ans = input('Is this the correct set of directories containing data? [y/n] \nYou can also choose the correct dir with number, splitted by \",\" ')
         if ans.lower() != 'y':
-            raise ValueError('Preprocessing stopped. Answer "y"/"Y" next time.')
+            choice = ans.split(',')
+            new_dirs = []
+            for c in choice:
+                if int(c) <= len(dirs):
+                    new_dirs += [dirs[int(c)-1]]
+                else:
+                    raise ValueError('Preprocessing stopped. Answer "y"/"Y" next time. Or type in the correct index of dirs')
+            if len(new_dirs) > 0:
+                dirs = new_dirs
+            else:
+                raise ValueError('Preprocessing stopped. Answer "y"/"Y" next time. Or type in the correct index of dirs')
+    # ipdb.set_trace()
     _validate_timestamps(dirs)
     return dirs
 
@@ -36,6 +48,8 @@ def _validate_timestamps(dirs):
     for dir in dirs:
         dname = Path(dir).name
         lidar_paths = os.path.join(dir, 'input', 'lidar', f'{dname}_C', '*.pcd')
+        
+        # ipdb.set_trace()
         for lidar_path in glob.glob(lidar_paths):
             lidar_ts = Path(lidar_path).stem
             if lidar_ts in timestamps:
@@ -60,11 +74,11 @@ def main():
     parser = argparse.ArgumentParser(description='Read raw radar sweeps')
     parser.add_argument('load_dir', help='path to root of directory containing unprocessed data')
     parser.add_argument('save_dir', help='path to root of directory to store processed data')
-    parser.add_argument('--skip_read_raw', action='store_true', help='skip read_raw.py')
-    parser.add_argument('--skip_extract_gt', action='store_true', help='skip extract_gt.py')
-    parser.add_argument('--skip_pcl_sync', action='store_true', help='skip pcl_sync.py')
-    parser.add_argument('--skip_copy_lidar', action='store_true', help='skip copy_lidar.py')
-    parser.add_argument('--skip_partition', action='store_true', help='skip partition.py')
+    parser.add_argument('--skip_read_raw', type=bool, default=False, help='skip read_raw.py')
+    parser.add_argument('--skip_extract_gt', type=bool, default=False, help='skip extract_gt.py')
+    parser.add_argument('--skip_pcl_sync', type=bool, default=False, help='skip pcl_sync.py')
+    parser.add_argument('--skip_copy_lidar', type=bool, default=False, help='skip copy_lidar.py')
+    parser.add_argument('--skip_partition', type=bool, default=False, help='skip partition.py')
     # parser.add_argument('--skip_vis_pcl', action='store_true', help='skip vis_pcl.py')
     parser.add_argument('-y', action='store_true', help='assume yes')
     args = parser.parse_args()
@@ -99,6 +113,7 @@ def main():
     if not args.skip_pcl_sync:
         for dir in dirs:
             print(f'*** {dir} ***')
+            # ipdb.set_trace()
             pcl_sync.pcl_sync(dir, args.save_dir, base_timestamps[dir])
         _purge(_raw_paths)  # remove unsynced gt and radar data to save storage
     else: print('(skipped)')

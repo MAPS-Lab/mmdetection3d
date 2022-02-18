@@ -7,10 +7,22 @@ def copy_lidar(load_dir, save_dir):
     # NB: not actually copying files, but creating symlinks to save space
     # figure out the source directory
     lidar_source = os.path.join(load_dir, 'input', 'lidar')
-    path_options = os.listdir(lidar_source)
-    if len(path_options) != 1:
-        raise ValueError(f'"{lidar_source}" contains {path_options} files. Expecting exactly 1 subdirectory.')
-    lidar_source = os.path.join(lidar_source, path_options[0])
+    
+    # =========================== Modified by DJ ==============================
+    # only one lidar is used
+    root_ts = Path(load_dir).name
+    path_option = os.path.join(lidar_source, root_ts+'_C')
+    if not os.path.exists(path_option):
+        raise ValueError(f'"{path_option}" doesn\'t exist! ')
+    lidar_source = path_option
+    # =========================== Modified by DJ ==============================
+
+    # path_options = os.listdir(lidar_path)
+    # path_options = os.listdir(lidar_source)
+    # if len(path_options) != 1:
+    #     raise ValueError(f'"{lidar_source}" contains {path_options} files. Expecting exactly 1 subdirectory.')
+    # lidar_source = os.path.join(lidar_source, path_options[0])
+    
     # copy source files to processed directory to allow for easier downstream processing
     lidar_filenames = os.path.join(lidar_source, '*.pcd')
     dest_dir = os.path.join(save_dir, 'inhouse_format', 'lidar')

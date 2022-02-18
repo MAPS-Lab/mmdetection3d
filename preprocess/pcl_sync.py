@@ -10,6 +10,7 @@ from glob import glob
 from os.path import join as osp
 import pandas as pd
 from pose_extract import get_trans_from_gnssimu, get_matrix_from_ext, get_interpolate_pose
+from pathlib import Path
 import argparse
 
 def get_cor_radar_idx(lidar_ts, radar_ts):
@@ -101,10 +102,18 @@ def save_sync_gt(save_gt,gt_cor_idx,base_ts_utc,lidar_ts,gt_files):
 
 def _get_lidar_path(load_dir):
     lidar_path = os.path.join(load_dir, 'input', 'lidar')
-    path_options = os.listdir(lidar_path)
-    if len(path_options) != 1:
-        raise ValueError(f'"{lidar_path}" contains {path_options} files. Expecting exactly 1 subdirectory.')
-    return os.path.join(lidar_path, path_options[0])
+    # =========================== Modified by DJ ==============================
+    root_ts = Path(load_dir).name
+    
+    # path_options = os.listdir(lidar_path)
+    # only one lidar is used
+    path_option = os.path.join(lidar_path, root_ts+'_C')
+    if not os.path.exists(path_option):
+        raise ValueError(f'"{path_option}" doesn\'t exist! ')
+    # =========================== Modified by DJ ==============================
+    # if len(path_options) != 1:
+    #     raise ValueError(f'"{lidar_path}" contains {path_options} files. Expecting exactly 1 subdirectory.')
+    return path_option
 
 def pcl_sync(load_dir, save_dir, base_ts: dict):
     # save path of concatenated radar point clouds

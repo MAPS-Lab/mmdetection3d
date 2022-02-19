@@ -1,0 +1,1 @@
+python /mmdetection3d/preprocess/preprocess.py 

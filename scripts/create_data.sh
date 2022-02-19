@@ -1,0 +1,1 @@
+python /mmdetection3d/tools/create_data.py inhouse --root-path /public/shangqi --out-dir /public/shangqi --extra-tag inhouse

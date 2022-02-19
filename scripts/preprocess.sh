@@ -1,1 +1,1 @@
-python /mmdetection3d/preprocess/preprocess.py 
+python /mmdetection3d/preprocess/preprocess.py /public/inhouse /public/shangqi

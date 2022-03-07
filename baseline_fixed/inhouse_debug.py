@@ -399,7 +399,7 @@ momentum_config = dict(
     target_ratio=(0.8947368421052632, 1),
     cyclic_times=1,
     step_ratio_up=0.4)
-runner = dict(type='EpochBasedRunner', max_epochs=180)
+runner = dict(type='EpochBasedRunner', max_epochs=160)
 checkpoint_config = dict(interval=1)
 log_config = dict(
     interval=50,
@@ -407,8 +407,8 @@ log_config = dict(
            dict(type='TensorboardLoggerHook')])
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = 'baseline'
+work_dir = 'baseline_fixed'
 load_from = None
-resume_from = 'baseline/epoch_140.pth'
+resume_from = 'baseline_fixed/epoch_30.pth'
 workflow = [('train', 1)]
 gpu_ids = [0]

@@ -262,6 +262,7 @@ def create_groundtruth_database(dataset_class_name,
         annos = example['ann_info']
         image_idx = example['sample_idx']
         points = example['points'].tensor.numpy()
+        # print(points.shape)
         gt_boxes_3d = annos['gt_bboxes_3d'].tensor.numpy()
         names = annos['gt_names']
         group_dict = dict()

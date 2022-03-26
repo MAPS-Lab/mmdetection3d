@@ -108,6 +108,7 @@ def _inhouse_calculate_num_points_in_gt(data_path,
         rots = annos['rotation_y'][:num_obj]
         gt_boxes_pts = np.concatenate([loc, dims, rots[..., np.newaxis]], axis=1)
         indices = box_np_ops.points_in_rbbox(points_v[:, :3], gt_boxes_pts)
+        # indices_new = box_np_ops.points_in_rbbox(points_v[:, :3], gt_boxes_pts, origin=(0.5, 0.5, 0.5))
         num_points_in_gt = indices.sum(0)
         num_ignored = len(annos['dimensions']) - num_obj
         num_points_in_gt = np.concatenate([num_points_in_gt, -np.ones([num_ignored])])
@@ -284,6 +285,7 @@ def create_inhouse_info_file(data_path,
     print('Generate info. this may take several minutes.')
     if save_path is None: save_path = Path(data_path)
     else: save_path = Path(save_path)
+    # print(pts_dir)
     inhouse_infos_train = get_inhouse_image_info(
         data_path,
         pts_dir,
@@ -301,6 +303,9 @@ def create_inhouse_info_file(data_path,
     filename = save_path / f'{pkl_prefix}_infos_train.pkl'
     print(f'Inhouse info train file is saved to {filename}')
     mmcv.dump(inhouse_infos_train, filename)
+    # import ipdb
+    # ipdb.set_trace()
+    print(pts_dir)
     inhouse_infos_val = get_inhouse_image_info(
         data_path,
         pts_dir,

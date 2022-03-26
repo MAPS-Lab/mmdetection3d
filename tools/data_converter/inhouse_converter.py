@@ -31,15 +31,20 @@ ext_params = {
 
 
 class InhouseLabel2Kitti:
+    '''
+    1. l,w,h (inhouse) --> h,w,l (kitti)
+    2. bbox origin at volumetric center (inhouse) -> bottom center (kitti)
+    '''
+    
     def __init__(self, inhouse_label, classname_dict):
         self._class = classname_dict[inhouse_label[1]]
         self._trunc = -1
         self._occl = -1
         self._alpha = -10
         self._bbox = [-1, -1, -1, -1]
-        self._length = inhouse_label[5]
-        self._width = inhouse_label[6]
-        self._height = inhouse_label[7]
+        self._length = inhouse_label[5] # lx 
+        self._width = inhouse_label[6] # ly
+        self._height = inhouse_label[7] # lz
         self._x = inhouse_label[2]
         self._y = inhouse_label[3]
         self._z = inhouse_label[4] - self._height / 2.0
@@ -48,7 +53,7 @@ class InhouseLabel2Kitti:
     def __repr__(self) -> str:
         return f'{self._class} {self._trunc} {self._occl} {self._alpha} '\
             f'{self._bbox[0]} {self._bbox[1]} {self._bbox[2]} {self._bbox[3]} '\
-            f'{self._height:.2f} {self._width:.2f} {self._length:.2f} '\
+            f'{self._width:.2f} {self._height:.2f} {self._length:.2f} '\
             f'{self._x:.2f} {self._y:.2f} {self._z:.2f} '\
             f'{self._roty:.2f}'
 
@@ -72,7 +77,8 @@ class Inhouse2KITTI(object):
                  save_dir,
                  split,
                  workers=64,
-                 test_mode=False):
+                 test_mode=False,
+                 modality='lidar'):
         self.filter_empty_3dboxes = True
         self.filter_no_label_zone_points = True
 
@@ -89,7 +95,7 @@ class Inhouse2KITTI(object):
         self.split = split
         self.workers = int(workers)
         self.test_mode = test_mode
-
+        self.modality = modality
         assert split in {'training', 'validation', 'testing'}
         self.split_file = 'train.txt'
         if split == 'validation': self.split_file = 'val.txt'
@@ -127,10 +133,16 @@ class Inhouse2KITTI(object):
 
     def convert_one(self, ts):
         self.save_calib(ts)
-        self.save_lidar(ts)
-        self.save_radar(ts)
-        self.save_radar_label(ts)  # bboxes without nearby radar points filtered out
-        self.save_label(ts)
+        if self.modality == 'lidar':
+            self.save_lidar(ts)
+            self.save_label(ts)
+        elif self.modality == 'radar':
+            self.save_radar(ts)
+            self.save_radar_label(ts)
+        else:
+            raise NotImplementedError('no conversion function implemented for modality: ' + self.modality)
+        # bboxes without nearby radar points filtered out
+        
 
     def __len__(self):
         return len(self.timestamps)
@@ -242,10 +254,14 @@ class Inhouse2KITTI(object):
                 raise
             with open(label_save_path, 'w') as fp:
                 for label in labels:
-                    fp.write(f'{self.inhouse_to_kitti_class_map[label[1]]} -1 -1 -10 -1 -1 -1 -1 '\
-                        f'{label[7]:.2f} {label[6]:.2f} {label[5]:.2f} '\
-                        f'{label[2]:.2f} {label[3]:.2f} {label[4]:.2f} '\
-                        f'{label[9]:.2f}\n')
+                    kitti_label = InhouseLabel2Kitti(label, self.inhouse_to_kitti_class_map)
+                    fp.write(f'{kitti_label}\n')
+            # with open(label_save_path, 'w') as fp:
+            #     for label in labels:
+            #         fp.write(f'{self.inhouse_to_kitti_class_map[label[1]]} -1 -1 -10 -1 -1 -1 -1 '\
+            #             f'{label[7]:.2f} {label[6]:.2f} {label[5]:.2f} '\
+            #             f'{label[2]:.2f} {label[3]:.2f} {label[4]:.2f} '\
+            #             f'{label[9]:.2f}\n')
 
     def save_calib(self, ts):
         """Parse and save the calibration data."""

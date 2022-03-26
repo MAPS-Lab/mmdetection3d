@@ -47,7 +47,8 @@ def get_rotation(arr):
 def get_bbx_param(obj_info, scale=1.1):
 
     center = obj_info[2:5] 
-    extent = obj_info[5:8] * 1.3
+    extent = obj_info[5:8] 
+    extent = obj_info[5:8] * 1.2
     extent[2] += 10
     
     angle = obj_info[8:]
@@ -71,7 +72,7 @@ ext_params = {
 def get_date_key(ts):
     return '0118' if ts < 1643000000000 else '0126'
 
-def filter_radar_label(save_dir, filter_num=3):
+def filter_radar_label(save_dir, filter_num=1):
     
     radar_files = sorted(glob(osjoin(save_dir, 'inhouse_format', 'radar/*.csv')))
     gt_files = sorted(glob(osjoin(save_dir, 'inhouse_format', 'gt/*.csv')))

@@ -475,11 +475,14 @@ def get_inhouse_image_info(path,
     def _get_path(idx, root_path, dir_name, ext, relative=True, exist_check=True):
         path = Path(dir_name) / f'{idx}.{ext}'
         abs_path = root_path / path
+        # print(str(abs_path))
         if not abs_path.exists():
             print(f'WARN: "{abs_path}" does not exist')
         return path if relative else abs_path
 
     def map_func(idx):
+        # import ipdb
+        # ipdb.set_trace()
         info = {
             'pts_pc': {
                 'num_features': len(pts_dtype),
@@ -491,7 +494,12 @@ def get_inhouse_image_info(path,
         calib_info = info['calib']
 
         if labels:
-            label_path = _get_path(idx, root_path, 'label', 'txt', relative=False)
+            if pts_dir == 'radar':
+                label_dir = 'label_r'
+            else:
+                label_dir = 'label'
+
+            label_path = _get_path(idx, root_path, label_dir, 'txt', relative=False)
             info['annos'] = get_label_anno(label_path)
             add_difficulty_to_annos(info)
 

@@ -186,7 +186,8 @@ def inhouse_data_prep(root_path,
                     info_prefix,
                     version,
                     out_dir,
-                    workers):
+                    workers,
+                    skip_conversion=False):
     """Prepare the info file for inhouse dataset.
 
     Args:
@@ -203,18 +204,19 @@ def inhouse_data_prep(root_path,
     }
     modalities = ['radar'] if version == 'radar' else ['lidar']
     assert len(modalities) == 1, 'multi-modality not supported yet'
-
-    splits = ['training', 'validation', 'testing']
-    for _, split in enumerate(splits):
-        load_dir = osp.join(root_path, 'inhouse_format')
-        save_dir = osp.join(out_dir, 'kitti_format')
-        converter = inhouse.Inhouse2KITTI(
-            load_dir,
-            save_dir,
-            split=split,
-            workers=workers,
-            test_mode=(split == 'testing'))
-        converter.convert()
+    if not skip_conversion:
+        splits = ['training', 'validation', 'testing']
+        for _, split in enumerate(splits):
+            load_dir = osp.join(root_path, 'inhouse_format')
+            save_dir = osp.join(out_dir, 'kitti_format')
+            converter = inhouse.Inhouse2KITTI(
+                load_dir,
+                save_dir,
+                split=split,
+                workers=workers,
+                test_mode=(split == 'testing'),
+                modality = modalities[0])
+            converter.convert()
     # Generate inhouse infos
     out_dir = osp.join(out_dir, 'kitti_format')
     kitti.create_inhouse_info_file(
@@ -234,15 +236,21 @@ def inhouse_data_prep(root_path,
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
 parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
+# parser.add_argument('--dataset', default='inhouse', help='name of the dataset')
 parser.add_argument(
     '--root-path',
     type=str,
-    default='./data/kitti',
+    default='/public/shangqi/radar_test',
     help='specify the root path of dataset')
+parser.add_argument(
+    '--skip-conversion',
+    type=bool,
+    default=False,
+    help='whether to skip conversion')
 parser.add_argument(
     '--version',
     type=str,
-    default='v1.0',
+    default='radar',
     required=False,
     help='specify the dataset version, no need for kitti')
 parser.add_argument(
@@ -254,10 +262,10 @@ parser.add_argument(
 parser.add_argument(
     '--out-dir',
     type=str,
-    default='./data/kitti',
-    required='False',
+    default='/public/shangqi/radar_test',
+    required=False,
     help='name of info pkl')
-parser.add_argument('--extra-tag', type=str, default='kitti')
+parser.add_argument('--extra-tag', type=str, default='inhouse')
 parser.add_argument(
     '--workers', type=int, default=4, help='number of threads to be used')
 args = parser.parse_args()
@@ -322,7 +330,8 @@ if __name__ == '__main__':
             info_prefix=args.extra_tag,
             version=args.version,
             out_dir=args.out_dir,
-            workers=args.workers)
+            workers=args.workers,
+            skip_conversion=args.skip_conversion)
     elif args.dataset == 'scannet':
         scannet_data_prep(
             root_path=args.root_path,

@@ -34,6 +34,7 @@ class InhouseLabel2Kitti:
     '''
     1. l,w,h (inhouse) --> h,w,l (kitti)
     2. bbox origin at volumetric center (inhouse) -> bottom center (kitti)
+    3. using negative heading to keep the same format in opencv
     '''
     
     def __init__(self, inhouse_label, classname_dict):
@@ -48,14 +49,18 @@ class InhouseLabel2Kitti:
         self._x = inhouse_label[2]
         self._y = inhouse_label[3]
         self._z = inhouse_label[4] - self._height / 2.0
+        self._rotx = inhouse_label[8]
         self._roty = inhouse_label[9]
+        # self._rotz = inhouse_label[10]
+        self._heading = np.arctan(self._roty/self._rotx)
+
 
     def __repr__(self) -> str:
         return f'{self._class} {self._trunc} {self._occl} {self._alpha} '\
             f'{self._bbox[0]} {self._bbox[1]} {self._bbox[2]} {self._bbox[3]} '\
-            f'{self._width:.2f} {self._height:.2f} {self._length:.2f} '\
-            f'{self._x:.2f} {self._y:.2f} {self._z:.2f} '\
-            f'{self._roty:.2f}'
+            f'{self._width:.3f} {self._height:.3f} {self._length:.3f} '\
+            f'{self._x:.3f} {self._y:.3f} {self._z:.3f} '\
+            f'{-self._heading:.3f}'
 
 class Inhouse2KITTI(object):
     """Inhouse to KITTI converter.

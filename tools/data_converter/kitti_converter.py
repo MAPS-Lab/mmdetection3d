@@ -108,11 +108,64 @@ def _inhouse_calculate_num_points_in_gt(data_path,
         rots = annos['rotation_y'][:num_obj]
         gt_boxes_pts = np.concatenate([loc, dims, rots[..., np.newaxis]], axis=1)
         indices = box_np_ops.points_in_rbbox(points_v[:, :3], gt_boxes_pts)
-        # indices_new = box_np_ops.points_in_rbbox(points_v[:, :3], gt_boxes_pts, origin=(0.5, 0.5, 0.5))
+        
+        
         num_points_in_gt = indices.sum(0)
+        # ============= box_np_ops returns slightly different result compared to open3d ============
+        # idx = np.where(indices == True)[0]
+        o3d_boxes, o3d_indices, o3d_num = get_num_pts_in_gt_o3d(np.concatenate([loc, dims, -rots[..., np.newaxis]], axis=1), points_v)
+        diff = num_points_in_gt - np.array(o3d_num)
+        diff_sum = diff.sum()
+        if diff_sum != 0:
+            print('\n max diff: ', diff.max())
         num_ignored = len(annos['dimensions']) - num_obj
         num_points_in_gt = np.concatenate([num_points_in_gt, -np.ones([num_ignored])])
         annos['num_points_in_gt'] = num_points_in_gt.astype(np.int32)
+
+# ============ test num_pts calculation ============
+def get_num_pts_in_gt_o3d(gt_boxes_pts, points):
+    import open3d   
+    import numpy as np
+    from scipy.spatial.transform import Rotation as R
+
+    def get_rotation(yaw):
+        # x,y,_ = arr[:3]
+        # yaw = np.arctan(y/x)
+        angle = np.array([0, 0, yaw])
+        r = R.from_euler('XYZ', angle)
+        return r.as_matrix()
+
+    def get_bbx_param(obj_info, scale=1.1):
+
+        center = obj_info[:3] + 0.0
+        extent = obj_info[3:6] + 0.0
+        angle = obj_info[6] + 0.0
+        center[-1] += 0.5 * extent[-1]
+
+        rot_m = get_rotation(angle)
+        
+        obbx = open3d.geometry.OrientedBoundingBox(center.T, rot_m, extent.T)
+        return obbx
+
+    def get_indices(gt_boxes_pts, points):
+        pts = points[:,:3]
+        pcd = open3d.geometry.PointCloud()
+        pcd.points = open3d.utility.Vector3dVector(pts)
+        # gt_boxes_pts = np.concatenate([loc, dims, rots[..., np.newaxis]], axis=1)
+        o3d_boxes = []
+        o3d_indices = []
+        o3d_num = []
+        for b in gt_boxes_pts:
+           o3d_box = get_bbx_param(b)
+           o3d_boxes += [o3d_box]
+           indices = o3d_box.get_point_indices_within_bounding_box(pcd.points)
+           o3d_num += [len(indices)]
+           o3d_indices += [indices]
+        return o3d_boxes, o3d_indices, o3d_num
+        
+    return get_indices(gt_boxes_pts, points)
+    
+# ============ test num_pts calculation ============
 
 
 def create_kitti_info_file(data_path,

@@ -235,8 +235,8 @@ def inhouse_data_prep(root_path,
         with_mask=False)
 
 parser = argparse.ArgumentParser(description='Data converter arg parser')
-parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
-# parser.add_argument('--dataset', default='inhouse', help='name of the dataset')
+# parser.add_argument('dataset', metavar='kitti', help='name of the dataset')
+parser.add_argument('--dataset', default='inhouse', help='name of the dataset')
 parser.add_argument(
     '--root-path',
     type=str,
@@ -245,7 +245,7 @@ parser.add_argument(
 parser.add_argument(
     '--skip-conversion',
     type=bool,
-    default=False,
+    default=True,
     help='whether to skip conversion')
 parser.add_argument(
     '--version',
